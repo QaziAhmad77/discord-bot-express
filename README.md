@@ -1,6 +1,6 @@
-# Discord Bot with URL Shortener
+# discord-bot-express
 
-A Discord bot that shortens URLs and stores them in MongoDB, with a web service to handle redirects.
+A multi-feature Discord bot built with Node.js and Discord.js that provides attendance tracking and URL shortening services. Features include check-in/checkout commands, URL shortening with click tracking, and a web interface for URL redirects. Built with Express, MongoDB, and modular architecture.
 
 ## 📁 Project Structure
 
@@ -10,11 +10,14 @@ bot/
 │   ├── app.js          # Application configuration
 │   └── database.js     # MongoDB connection
 ├── controllers/         # Business logic
-│   └── urlController.js # URL redirect controller
+│   ├── urlController.js # URL redirect controller
+│   └── attendanceController.js # Attendance controller
 ├── routes/              # API routes
-│   └── urlRoutes.js     # URL routes
+│   ├── urlRoutes.js     # URL routes
+│   └── attendanceRoutes.js # Attendance routes
 ├── models/              # Database models
-│   └── Url.js          # URL model
+│   ├── Url.js          # URL model
+│   └── Attendance.js   # Attendance model
 ├── services/            # Services
 │   └── discordBot.js   # Discord bot service
 ├── commands/            # Discord slash commands
@@ -75,16 +78,19 @@ npm run dev
 
 ## 📝 Features
 
+- **Attendance Tracking**: Use `/checkin` and `/checkout` commands to track user attendance
 - **URL Shortening**: Use `/shorten url:<your-url>` in Discord to create short URLs
 - **URL Redirects**: Click on short URLs to be redirected to the original URL
 - **Click Tracking**: Automatically tracks clicks on shortened URLs
 - **Duplicate Prevention**: Returns existing short URL if the same URL is shortened again
-- **MongoDB Storage**: All URLs are stored in MongoDB
+- **MongoDB Storage**: All URLs and attendance records are stored in MongoDB
 
 ## 🎯 Usage
 
 ### Discord Commands
 
+- `/checkin` - Check in and mark your attendance
+- `/checkout` - Check out and record your departure time
 - `/shorten url:<url>` - Shorten a URL
 - `/ping` - Check if bot is responsive
 - `/hello target:<user>` - Say hello to a user
@@ -141,4 +147,3 @@ The project follows Node.js best practices:
 ## 📄 License
 
 ISC
-
