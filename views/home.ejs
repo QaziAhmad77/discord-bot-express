@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener Service</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: white;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        padding: 2rem;
+      }
+      .main-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+      .section-panel {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(5px);
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 200px);
+        overflow: hidden;
+      }
+      .urls-section,
+      .attendance-section {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 0.5rem;
+      }
+      .urls-section::-webkit-scrollbar,
+      .attendance-section::-webkit-scrollbar {
+        width: 6px;
+      }
+      .urls-section::-webkit-scrollbar-track,
+      .attendance-section::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+      .urls-section::-webkit-scrollbar-thumb,
+      .attendance-section::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+      }
+      .urls-section::-webkit-scrollbar-thumb:hover,
+      .attendance-section::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .subtitle {
+        margin-top: 1rem;
+        opacity: 0.9;
+      }
+      code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+      }
+      .urls-section {
+        margin-top: 1rem;
+      }
+      .urls-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .urls-count {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .urls-list {
+        display: grid;
+        gap: 1rem;
+      }
+      .url-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        transition: transform 0.2s, background 0.2s;
+      }
+      .url-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .url-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 1rem;
+        align-items: center;
+      }
+      .url-info {
+        min-width: 0;
+      }
+      .original-url {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+        word-break: break-all;
+        margin-bottom: 0.5rem;
+      }
+      .short-url {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .short-url a {
+        color: #fff;
+        text-decoration: none;
+        font-family: 'Courier New', monospace;
+      }
+      .short-url a:hover {
+        text-decoration: underline;
+      }
+      .url-stats {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+      }
+      .clicks-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+      .date {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        opacity: 0.8;
+      }
+      .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+      .shorten-form {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      .form-group {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .form-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+      .form-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .form-input:focus {
+        border-color: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .form-button {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+      .form-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+      .form-button:active {
+        transform: translateY(0);
+      }
+      .message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-weight: 500;
+      }
+      .message-success {
+        background: rgba(76, 175, 80, 0.3);
+        border: 1px solid rgba(76, 175, 80, 0.5);
+        color: #fff;
+      }
+      .message-error {
+        background: rgba(244, 67, 54, 0.3);
+        border: 1px solid rgba(244, 67, 54, 0.5);
+        color: #fff;
+      }
+      .attendance-section {
+        margin-top: 0;
+      }
+      .attendance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .attendance-count {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .attendance-list {
+        display: grid;
+        gap: 1rem;
+      }
+      .attendance-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        transition: transform 0.2s, background 0.2s;
+      }
+      .attendance-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .attendance-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 1rem;
+        align-items: center;
+      }
+      .attendance-info {
+        min-width: 0;
+      }
+      .username {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      .time-info {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0.25rem 0;
+      }
+      .time-label {
+        font-weight: 600;
+        display: inline-block;
+        min-width: 80px;
+      }
+      .status-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+      .status-active {
+        background: rgba(255, 193, 7, 0.3);
+        border: 1px solid rgba(255, 193, 7, 0.5);
+        color: #ffc107;
+      }
+      .status-completed {
+        background: rgba(76, 175, 80, 0.3);
+        border: 1px solid rgba(76, 175, 80, 0.5);
+        color: #ffffff;
+      }
+      .duration-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+      .tab {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.3s;
+      }
+      .tab:hover {
+        color: white;
+      }
+      .tab.active {
+        color: white;
+        border-bottom-color: white;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      @media (max-width: 768px) {
+        .url-row {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .url-stats {
+          flex-direction: row;
+          justify-content: space-between;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        .main-layout {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+        .form-group {
+          flex-direction: column;
+        }
+        .form-button {
+          width: 100%;
+        }
+        .attendance-row {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .tabs {
+          overflow-x: auto;
+        }
+        .section-panel {
+          padding: 1rem;
+          max-height: none;
+        }
+        .urls-section,
+        .attendance-section {
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔗 URL Shortener & 📅 Attendance Tracker</h1>
+        <p class="subtitle">
+          Manage your URLs and track attendance all in one place.
+        </p>
+      </div>
+
+      <!-- Main Layout: Two Columns -->
+      <div class="main-layout">
+        <!-- Left Side: URL Shortener -->
+        <div class="section-panel">
+          <h2 class="section-title">🔗 URL Shortener</h2>
+          
+          <!-- Shorten URL Form -->
+          <div class="shorten-form">
+        <form method="POST" action="/" id="shortenForm">
+          <div class="form-group">
+            <input
+              type="url"
+              name="url"
+              class="form-input"
+              placeholder="Enter a URL to shorten (e.g., https://example.com)"
+              required
+              autocomplete="off"
+            />
+            <button type="submit" class="form-button">Shorten URL</button>
+          </div>
+        </form>
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="message message-error">
+            ❌ <%= error %>
+          </div>
+        <% } %>
+        <% if (typeof success !== 'undefined' && success) { %>
+          <div class="message message-success">
+            ✅ <%= success %>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="urls-section">
+        <div class="urls-header">
+          <h2 class="urls-count">
+            <% if (urls && urls.length > 0) { %>
+              <%= urls.length %> Saved URL<%= urls.length !== 1 ? 's' : '' %>
+            <% } else { %>
+              No URLs Yet
+            <% } %>
+          </h2>
+          </div>
+
+        <% if (urls && urls.length > 0) { %>
+          <div class="urls-list">
+            <% urls.forEach(function(url) { %>
+              <div class="url-card">
+                <div class="url-row">
+                  <div class="url-info">
+                    <div class="original-url" title="<%= url.originalUrl %>">
+                      <%= url.originalUrl %>
+                    </div>
+                    <div class="short-url">
+                      <a href="<%= baseUrl %>/<%= url.shortCode %>" target="_blank">
+                        <%= baseUrl %>/<%= url.shortCode %>
+                      </a>
+                    </div>
+                  </div>
+                  <div class="url-stats">
+                    <div class="stat-item">
+                      <span class="clicks-badge">👆 <%= url.clicks || 0 %> clicks</span>
+                    </div>
+                    <div class="date">
+                      Created: <%= new Date(url.createdAt).toLocaleDateString() %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No URLs have been shortened yet.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">
+              Use the Discord bot to create your first short URL!
+            </p>
+          </div>
+        <% } %>
+          </div>
+        </div>
+
+        <!-- Right Side: Attendance Tracker -->
+        <div class="section-panel">
+          <h2 class="section-title">📅 Attendance Tracker</h2>
+          
+          <div class="attendance-section">
+            <div class="attendance-header">
+              <h3 class="attendance-count">
+                <% if (typeof todayAttendance !== 'undefined' && todayAttendance && todayAttendance.length > 0) { %>
+                  <%= todayAttendance.length %> Today
+                <% } else { %>
+                  No Records Today
+                <% } %>
+              </h3>
+            </div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="showTab('today')">Today</button>
+          <button class="tab" onclick="showTab('recent')">Recent (7 days)</button>
+        </div>
+
+        <!-- Today's Attendance -->
+        <div id="today-tab" class="tab-content active">
+          <% if (typeof todayAttendance !== 'undefined' && todayAttendance && todayAttendance.length > 0) { %>
+            <div class="attendance-list">
+              <% todayAttendance.forEach(function(record) { %>
+                <div class="attendance-card">
+                  <div class="attendance-row">
+                    <div class="attendance-info">
+                      <div class="username">👤 <%= record.username %></div>
+                      <div class="time-info">
+                        <span class="time-label">Check-in:</span>
+                        <%= record.checkInFormatted %>
+                      </div>
+                      <div class="time-info">
+                        <span class="time-label">Check-out:</span>
+                        <%= record.checkOutFormatted %>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="status-badge <%= record.checkOut ? 'status-completed' : 'status-active' %>">
+                        <%= record.status %>
+                      </span>
+                    </div>
+                    <div>
+                      <div class="duration-badge">⏱️ <%= record.duration %></div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <p>No attendance records for today yet.</p>
+              <p style="margin-top: 0.5rem; opacity: 0.8;">
+                Use <code>/checkin</code> in Discord to mark your attendance!
+              </p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Recent Attendance -->
+        <div id="recent-tab" class="tab-content">
+          <% if (typeof recentAttendance !== 'undefined' && recentAttendance && recentAttendance.length > 0) { %>
+            <div class="attendance-list">
+              <% recentAttendance.forEach(function(record) { %>
+                <div class="attendance-card">
+                  <div class="attendance-row">
+                    <div class="attendance-info">
+                      <div class="username">👤 <%= record.username %></div>
+                      <div class="time-info">
+                        <span class="time-label">Date:</span>
+                        <%= new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %>
+                      </div>
+                      <div class="time-info">
+                        <span class="time-label">Check-in:</span>
+                        <%= record.checkInFormatted %>
+                      </div>
+                      <div class="time-info">
+                        <span class="time-label">Check-out:</span>
+                        <%= record.checkOutFormatted %>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="status-badge <%= record.checkOut ? 'status-completed' : 'status-active' %>">
+                        <%= record.status %>
+                      </span>
+                    </div>
+                    <div>
+                      <div class="duration-badge">⏱️ <%= record.duration %></div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <p>No recent attendance records.</p>
+              <p style="margin-top: 0.5rem; opacity: 0.8;">
+                Use <code>/checkin</code> in Discord to mark your attendance!
+              </p>
+          </div>
+        <% } %>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.classList.remove('active');
+        });
+
+        // Show selected tab content
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        // Add active class to clicked tab
+        event.target.classList.add('active');
+      }
+    </script>
+  </body>
+</html>
+
